@@ -56,14 +56,12 @@ print(
 	'Done, listening for grade addition of "' + get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') 
 	+ '" for "' + get_single_cell(sheet, spreadsheet, 'Poziomy!A' + str(no_on_list + 2)) + '".'
 )
-grade_shown = False
 
-while not grade_shown:
+while True:
 	grade = get_single_cell(sheet, spreadsheet, range_id)
 
 	if grade:
 		toaster.show_toast('Ocena z PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
-		grade_shown = True
 		print('Grade added, exiting...')
 		break
 		
