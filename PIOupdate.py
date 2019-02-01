@@ -10,6 +10,7 @@ import sys
 import time
 try:
 	from win10toast import ToastNotifier
+	toaster = None
 except:
 	win10toast = None
 	try:
@@ -17,11 +18,6 @@ except:
 	except:
 		print('No library for notifications, exiting...')
 		sys.exit()
-
-if not win10toast == None:
-	toaster = ToastNotifier()
-else:
-	notify2.init('PIO')
 
 scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 spreadsheet = '186G43CyKVm1R2fwDGTIjQOzQYqWTy-wSgmTfGZ_Kmek'
@@ -39,9 +35,9 @@ def get_single_cell(sheets_api_handle, spreadsheet, range_id):
 
 def notify(title, content):
 	if not win10toast == None:
-		toaster.show_toast('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+		toaster.show_toast(title, content)
 	else:
-		notification = notify2.Notification('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+		notification = notify2.Notification(title, content)
 		notification.show()
 
 def google_authorize_spreadsheet():
@@ -63,28 +59,37 @@ def google_authorize_spreadsheet():
 	service = build('sheets', 'v4', credentials=creds)
 	return service.spreadsheets()
 
-if len(sys.argv) == 3:
-	termin = int(sys.argv[1])
-	no_on_list = int(sys.argv[2])
-else:
-	print('usage: ' + sys.argv[0] + ' <term no> <number on list>')
-	sys.exit()
+def main():
+	if not win10toast == None:
+		toaster = ToastNotifier()
+	else:
+		notify2.init('PIO')
+	
+	if len(sys.argv) == 3:
+		termin = int(sys.argv[1])
+		no_on_list = int(sys.argv[2])
+	else:
+		print('usage: ' + sys.argv[0] + ' <term no> <number on list>')
+		sys.exit()
+	
+	range_id = 'Poziomy!' + str(term_columns[termin-1]) + str(no_on_list + 2)
+	print('Authorizing...')
+	sheet = google_authorize_spreadsheet()
+	print(
+		'Done, listening for grade addition of "' + get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') 
+		+ '" for "' + get_single_cell(sheet, spreadsheet, 'Poziomy!A' + str(no_on_list + 2)) + '".'
+	)
+	
+	while True:
+		grade = get_single_cell(sheet, spreadsheet, range_id)
+	
+		if grade:
+			notify('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+			print(get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+			print('Grade added, exiting...')
+			break
+			
+		time.sleep(30)
 
-range_id = 'Poziomy!' + str(term_columns[termin-1]) + str(no_on_list + 2)
-print('Authorizing...')
-sheet = google_authorize_spreadsheet()
-print(
-	'Done, listening for grade addition of "' + get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') 
-	+ '" for "' + get_single_cell(sheet, spreadsheet, 'Poziomy!A' + str(no_on_list + 2)) + '".'
-)
-
-while True:
-	grade = get_single_cell(sheet, spreadsheet, range_id)
-
-	if grade:
-		notify('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
-		print(get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
-		print('Grade added, exiting...')
-		break
-		
-	time.sleep(30)
+if __name__ == '__main__':
+	main()
