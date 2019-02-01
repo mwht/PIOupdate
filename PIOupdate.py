@@ -1,11 +1,6 @@
 #!/usr/bin/python
 
 from __future__ import print_function
-try:
-	from win10toast import ToastNotifier
-except:
-	win10toast = None
-	import notify2
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -13,6 +8,15 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import sys
 import time
+try:
+	from win10toast import ToastNotifier
+except:
+	win10toast = None
+	try:
+		import notify2
+	except:
+		print('No library for notifications, exiting...')
+		sys.exit()
 
 if not win10toast == None:
 	toaster = ToastNotifier()
@@ -32,6 +36,13 @@ def get_single_cell(sheets_api_handle, spreadsheet, range_id):
 			return row[0]
 	else:
 		return None
+
+def notify(title, content):
+	if not win10toast == None:
+		toaster.show_toast('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+	else:
+		notification = notify2.Notification('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+		notification.show()
 
 def google_authorize_spreadsheet():
 	creds = None
@@ -71,11 +82,7 @@ while True:
 	grade = get_single_cell(sheet, spreadsheet, range_id)
 
 	if grade:
-		if not win10toast == None:
-			toaster.show_toast('Ocena z PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
-		else:
-			notification = notify2.Notification('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
-			notification.show()
+		notify('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
 		print(get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
 		print('Grade added, exiting...')
 		break
