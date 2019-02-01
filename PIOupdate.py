@@ -1,5 +1,11 @@
+#!/usr/bin/python
+
 from __future__ import print_function
-from win10toast import ToastNotifier
+try:
+	from win10toast import ToastNotifier
+except:
+	win10toast = None
+	import notify2
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -8,7 +14,11 @@ from google.auth.transport.requests import Request
 import sys
 import time
 
-toaster = ToastNotifier()
+if not win10toast == None:
+	toaster = ToastNotifier()
+else:
+	notify2.init('PIO')
+
 scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 spreadsheet = '186G43CyKVm1R2fwDGTIjQOzQYqWTy-wSgmTfGZ_Kmek'
 term_columns = ['F', 'G', 'H']
@@ -61,7 +71,12 @@ while True:
 	grade = get_single_cell(sheet, spreadsheet, range_id)
 
 	if grade:
-		toaster.show_toast('Ocena z PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+		if not win10toast == None:
+			toaster.show_toast('Ocena z PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+		else:
+			notification = notify2.Notification('PIO', get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
+			notification.show()
+		print(get_single_cell(sheet, spreadsheet, 'Poziomy!' + str(term_columns[termin-1]) + '2') + ': ' + str(grade))
 		print('Grade added, exiting...')
 		break
 		
